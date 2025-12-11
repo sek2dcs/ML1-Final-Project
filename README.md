@@ -26,4 +26,7 @@ We created our own dataset using data from our cohort. We collected information 
 
 Because of inconsistency in headshot files, posture, and quality of images, not all measurements from all individuals were able to be taken. In addition, small changes in posture and quality could affect our CNNs ability to correctly detect facial features. facial feature detection trial and error with using different networks was frustrating to say the least. OpenCV facial width and height originated as a square, eyebrows would be recognized as noses, background noise from images would be detected as faces themselves, or nothing would be detected at all. We went through over three different CNNs before settling on one and being satisfied that most faces were detected accurately. Moreover, we had a very small sample size, which most likely indicates that our analysis is not an accurate representation of the cohort. 
 
+
+Link to working repo:
+https://github.com/sek2dcs/DS6021-ML-Final-Project/tree/main
               
