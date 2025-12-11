@@ -1,0 +1,28 @@
+/* The Gold Shimmer Animation */
+@keyframes shine {
+    0% {background-position: 0% 50%;}
+    100% {background-position: 200% 50%;}
+}
+
+.gold-shimmer {
+    background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+    background-size: 200% auto;
+    color: #000;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine 3s linear infinite;
+    font-weight: bold;
+}
+
+/* The Pulse/Glow Animation */
+@keyframes pulse-gold {
+    0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(212, 175, 55, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+}
+
+.gold-pulse {
+    border: 1px solid #D4AF37 !important;
+    animation: pulse-gold 2s infinite;
+}
