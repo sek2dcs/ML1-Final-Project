@@ -6,5 +6,7 @@ plotly
 gunicorn
 dash-bootstrap-components
 dash-iconify
+dash-mantine-components
 dash-bootstrap-templates
 matplotlib
+typing-extensions
