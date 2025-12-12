@@ -30,18 +30,18 @@ from sklearn.metrics import r2_score, mean_squared_error
 
 
 # ------------------------------------------------------------------------------
-# 1. THEME & STYLING (Keep this)
+# THEME & STYLING
 # ------------------------------------------------------------------------------
 theme = {
-    'background': '#111111',    # Very dark grey
-    'card_bg': '#1a1a1a',       # Slightly lighter for cards
-    'text': '#FFFFFF',          # White text
-    'accent': '#D4AF37',        # Metallic Gold
+    'background': '#111111',    
+    'card_bg': '#1a1a1a',      
+    'text': '#FFFFFF',          
+    'accent': '#D4AF37',        # metallic gold
     'accent_secondary': '#C5A028',
     'font_family': 'Helvetica, Arial, sans-serif'
 }
 
-# Styles for Tabs to make them Dark/Gold
+# styles for tabs to make them dark/gold
 tab_style = {
     'borderBottom': f'1px solid {theme["accent"]}',
     'padding': '6px',
@@ -58,11 +58,9 @@ tab_selected_style = {
 }
 
 # ------------------------------------------------------------------------------
-# 2. DATA LOADING (Old data removed)
+# DATA
 # ------------------------------------------------------------------------------
-# Place your new data loading code here
 df = pd.read_csv('final_data_with_demographics.csv')
-# Define your two feature sets
 feature_sets = {
     'Size': ['face_height', 'face_width', 'nose_width', 'mouth_width'],
     'Ratios': ['face_ratio', 'mouth_nose_ratio', 'eye_ratio', 'golden_score']
@@ -174,7 +172,6 @@ results_df["mean_score"] = results_df["mean_test_score"]
 best_k = grid.best_params_["knn__n_neighbors"]
 best_score = grid.best_score_
 
-# --- GOLD STYLE KNN LINE CHART ---
 bestk_fig = px.line(
     results_df,
     x="k",
@@ -185,7 +182,6 @@ bestk_fig = px.line(
     template='plotly_dark'
 )
 
-# Update line color to Gold
 bestk_fig.update_traces(line_color=theme['accent'], marker_color=theme['accent'])
 
 bestk_fig.add_scatter(
@@ -223,8 +219,8 @@ df_cat= faces_cut.copy()
 #catagory for discrete colors 
 df_cat['golden_score']= df_cat['golden_score'].astype("category")
 
-# --- GOLD PALETTE FOR SCATTER PLOTS ---
-# Gold, White, Dark Gold
+
+
 gold_discrete_sequence = [theme['accent'], '#FFFFFF', '#FCF6BA']
 
 eyeVsMouth = px.scatter(
@@ -257,34 +253,31 @@ faceVsMouth = px.scatter(
 )
 faceVsMouth.update_layout(plot_bgcolor=theme['card_bg'], paper_bgcolor=theme['background'], font_color=theme['text'])
 # ---------------------------------------------------------
-# 2. HELPER FUNCTION: RUN PCA
+# sophie PCA
 # ---------------------------------------------------------
 def calculate_pca(feature_list):
-    """
-    Takes a list of columns, runs PCA, and returns the Scores and Loadings.
-    """
-    # 1. Select and Standardize
+
+    # scaling data 
     X = df[feature_list].dropna().astype(float)
     scaler = StandardScaler()
     X_std = scaler.fit_transform(X)
     
-    # 2. Covariance & Eigenvectors
+
     cov_matrix = np.cov(X_std.T)
     eigvals, eigvecs = np.linalg.eig(cov_matrix)
     
-    # 3. Sort Eigenvalues (High to Low)
+    # sorting eigen stuff to ensure PCs are correct
     sorted_indices = np.argsort(eigvals)[::-1]
     sorted_vals = eigvals[sorted_indices]
     sorted_vecs = eigvecs[:, sorted_indices]
     
-    # 4. Project Data (Get Scores)
+ 
     scores = X_std @ sorted_vecs
     
-    # 5. Calculate Loadings (Correlation with original variables)
-    # Loadings = Eigenvector * sqrt(Eigenvalue)
+    # loadings
     loadings = sorted_vecs * np.sqrt(sorted_vals)
     
-    # Create temporary DataFrames
+    # pc dfs
     pc_df = df.loc[X.index].copy()
     pc_df['PC1'] = scores[:, 0]
     pc_df['PC2'] = scores[:, 1]
@@ -293,24 +286,21 @@ def calculate_pca(feature_list):
     
     return pc_df, loadings_df, sorted_vals
 
-# ------------------------------------------------------------------------------
-# 3. APP INIT
-# ------------------------------------------------------------------------------
 app = Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
 server = app.server
 
 # ------------------------------------------------------------------------------
-# 4. APP LAYOUT
+# app!!!!
 # ------------------------------------------------------------------------------
 app.layout = html.Div(
     style={'backgroundColor': theme['background'], 'minHeight': '100vh', 'padding': '20px'},
     children=[
         dbc.Container([
             
-            # TITLE (Notice we use className here, but no html.Style block above it)
+
             html.H1(
                 "Hot or Not?!", 
-                className="gold-shimmer",  # <--- This class now works because of the css file
+                className="gold-shimmer",  
                 style={'textAlign': 'center', 'marginBottom': '30px'} 
             ),
             
@@ -439,7 +429,7 @@ app.layout = html.Div(
                         html.P("Predicting golden ratio categories based on facial features", style={'color': theme['text']}),
                         html.Br(),
                         
-                        # Number of Bins Slider
+                         # bin slider
                         html.H4("Select Number of Bins", style={'color': theme['accent'], 'marginTop': '20px'}),
                         dcc.Slider(
                             id='num-bins-slider',
@@ -453,7 +443,7 @@ app.layout = html.Div(
                         html.Br(),
                         html.Br(),
                         
-                        # Check Individual's Golden Ratio Bin
+                        # check person's bin with dropdown
                         html.H4("Check Individual's Golden Ratio Bin", style={'color': theme['accent'], 'marginTop': '20px'}),
                         dcc.Dropdown(
                             id='person-dropdown',
@@ -470,32 +460,32 @@ app.layout = html.Div(
                         html.Hr(style={'borderColor': theme['accent']}),
                         html.Br(),
                         
-                        # Model Performance Metrics
+    
                         html.H4("Model Performance", style={'color': theme['accent'], 'marginTop': '20px'}),
                         html.Div(id='logistic-metrics', style={'color': theme['text'], 'marginBottom': '20px'}),
                         html.Br(),
                         
-                        # Confusion Matrix
+                        # confusion matrix
                         html.H4("Confusion Matrix", style={'color': theme['accent'], 'marginTop': '20px'}),
                         dcc.Graph(id='logistic-confusion-matrix'),
                         html.Br(),
                         
-                        # ROC Curves
+                        # ROC/AUC
                         html.H4("ROC Curves", style={'color': theme['accent'], 'marginTop': '20px'}),
                         dcc.Graph(id='logistic-roc-curves'),
                         html.Br(),
                         
-                        # Feature Importance
+                        # feature coef
                         html.H4("Feature Coefficients by Category", style={'color': theme['accent'], 'marginTop': '20px'}),
                         dcc.Graph(id='logistic-feature-importance'),
                         html.Br(),
                         
-                        # Ranked Feature Importance
+                        # ranked feat importance
                         html.H4("Overall Feature Importance", style={'color': theme['accent'], 'marginTop': '20px'}),
                         dcc.Graph(id='logistic-feature-ranked'),
                         html.Br(),
                         
-                        # Model Coefficients Table
+                        # model coef table
                         html.H4("Model Coefficients & Intercepts", style={'color': theme['accent'], 'marginTop': '20px'}),
                         dash_table.DataTable(
                             id='logistic-coefficients-table',
@@ -514,7 +504,7 @@ app.layout = html.Div(
                         ),
                         html.Br(),
                         
-                        # Conclusions
+                        # conclusions
                         html.H4("Conclusions", style={'color': theme['accent'], 'marginTop': '20px'}),
                         dcc.Markdown("""
 ### Logistic Regression Interpretation
@@ -642,17 +632,16 @@ Because our sample size is so small, creating bins was difficult as we needed en
                             ],
                             value='Size', 
                             clearable=False,
-                            style={'color': '#000'} # Text inside dropdown needs to be black
+                            style={'color': '#000'} 
                         )
                     ], style={'width': '50%', 'margin': 'auto', 'paddingBottom': '20px'}),
     
-                    # PCA Loadings Table
+                    # PCA loadings 
                     html.H4("PCA Loadings", style={'color': theme['accent'], 'textAlign': 'center'}),
                     dash_table.DataTable(
                         id='loadings-df',
                         page_size=10,
                         style_table={'overflowX': 'auto', 'marginBottom': '30px'},
-                        # Add Dark Theme Styling
                         style_header={'backgroundColor': theme['card_bg'], 'color': theme['accent'], 'border': '1px solid #333'},
                         style_data={'backgroundColor': theme['background'], 'color': theme['text'], 'border': '1px solid #333'},
                     ),
@@ -683,7 +672,7 @@ Because our sample size is so small, creating bins was difficult as we needed en
 )
 
 # ------------------------------------------------------------------------------
-# 5. CALLBACKS (Old callbacks removed)
+# CALLBACKS
 
 
 #Jills code
@@ -803,7 +792,6 @@ BIN_LABELS = {
 }
 
 def recategorize_y(df, num_bins):
-    """Bin golden_score into meaningful class names based on number of bins"""
     labels = BIN_LABELS[num_bins]
     quantiles = [df['golden_score'].quantile(i / num_bins) for i in range(1, num_bins)]
     df['golden_ratio_category'] = pd.cut(
@@ -813,65 +801,60 @@ def recategorize_y(df, num_bins):
     )
     return df
 
-# Remove rows with missing face measurements or golden_score
+# remove rows with missing face measurements or golden_score
 df_clean = df.dropna(subset=['face_width', 'face_height', 'golden_score']).copy()
 
-# Calculate face ratio (height/width) - already exists but recalculating for consistency
+# calculate face ratio (height/width) - already exists but recalculating for consistency
 df_clean['face_ratio'] = df_clean['face_height'] / df_clean['face_width']
 
-# Standardize pixel measurements by converting to ratios relative to face width
+# standardize pixel measurements 
 df_clean['nose_to_face_ratio'] = df_clean['nose_width'] / df_clean['face_width']
 df_clean['mouth_to_face_ratio'] = df_clean['mouth_width'] / df_clean['face_width']
 
-# Initial categorization with 5 bins (default)
+# initial categorization with 5 bins 
 df_clean = recategorize_y(df_clean.copy(), 5)
 
-# Since headshots are different sizes, we'll use ratios instead of raw pixel measurements
-# This standardizes the features across different image sizes
-# Select ratio-based features (standardized to be size-independent)
+
+# select ratio-based features 
 ratio_features = ['face_ratio', 'mouth_nose_ratio', 'eye_ratio', 
                   'nose_to_face_ratio', 'mouth_to_face_ratio']
 
-# Use rows where we have at least face_width and face_height
+# use rows where we have at least face_width and face_height
 df_model = df_clean.dropna(subset=['face_width', 'face_height']).copy()
 
-# Handle missing values in ratio features by imputing with median
+# handle missing values in ratio features by imputing with median
 for col in ratio_features:
     if col in df_model.columns and df_model[col].isnull().sum() > 0:
         median_val = df_model[col].median()
         df_model[col] = df_model[col].fillna(median_val)
 
-# Encode categorical variables (gender, race) if they exist
-# Check unique values in gender
+# encode categorical variables (gender, race) if they exist
+# check unique values in gender
 if 'gender' in df_model.columns:
-    # Create dummy variables for gender
+    # create dummy variables for gender
     gender_dummies = pd.get_dummies(df_model['gender'], prefix='gender')
     df_model = pd.concat([df_model, gender_dummies], axis=1)
     ratio_features = ratio_features + list(gender_dummies.columns)
 
-# Update feature columns to include all ratio features
+# update feature columns to include all ratio features
 feature_columns = [col for col in ratio_features if col in df_model.columns]
 
-# Prepare X and y
+
 X = df_model[feature_columns]
 y = df_model['golden_ratio_category']
 
-# Split the data
-# Note: Not using stratify because some categories may have very few samples
-# which would cause an error with stratified splitting
+# split the data
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42
 )
 
-# Scale the features (important for logistic regression)
-# Even though we're using ratios, StandardScaler ensures all features are on the same scale
-# This is especially important when features have different ranges
+# scale the features
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
-# Create and train the logistic regression model
-# Using multinomial for multi-class classification
+# create and train the logistic regression model
+# using multinomial for multi-class classification
 logistic_model = LogisticRegression(
     solver='lbfgs',
     max_iter=1000,
@@ -880,15 +863,15 @@ logistic_model = LogisticRegression(
 
 logistic_model.fit(X_train_scaled, y_train)
 
-# Make predictions
+# make predictions
 y_train_pred = logistic_model.predict(X_train_scaled)
 y_test_pred = logistic_model.predict(X_test_scaled)
 
-# Calculate accuracy
+# accuracy
 train_accuracy = accuracy_score(y_train, y_train_pred)
 test_accuracy = accuracy_score(y_test, y_test_pred)
 
-# Confusion matrix
+# confusion matrix
 cm = confusion_matrix(y_test, y_test_pred)
 cm_df = pd.DataFrame(
     cm,
@@ -909,14 +892,14 @@ confusion_matrix_graph.update_layout(
     font_color=theme['text']
 )
 
-# Get predicted probabilities for test set
+# get predicted probabilities for test set
 y_test_proba = logistic_model.predict_proba(X_test_scaled)
 
-# Binarize the labels for multiclass ROC (one-vs-rest approach)
+# binarize the labels for multiclass ROC (one-vs-rest approach)
 y_test_binarized = label_binarize(y_test, classes=logistic_model.classes_)
 n_classes = len(logistic_model.classes_)
 
-# Calculate ROC curve and AUC for each class
+# calculate ROC curve and AUC for each class
 fpr = dict()
 tpr = dict()
 roc_auc = dict()
@@ -925,20 +908,20 @@ for i in range(n_classes):
     fpr[i], tpr[i], _ = roc_curve(y_test_binarized[:, i], y_test_proba[:, i])
     roc_auc[i] = auc(fpr[i], tpr[i])
 
-# Calculate micro-averaged ROC curve and AUC
+# calculate micro-averaged ROC curve and AUC
 fpr["micro"], tpr["micro"], _ = roc_curve(y_test_binarized.ravel(), y_test_proba.ravel())
 roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
 
-# Calculate macro-averaged AUC
+# calculate macro-averaged AUC
 roc_auc["macro"] = roc_auc_score(y_test_binarized, y_test_proba, average='macro', multi_class='ovr')
 
-# Create figure
+# create figure
 roc_curve_graph = go.Figure()
 
-# Colors for the classes
+
 colors = ['blue', 'red', 'green', 'orange', 'purple']
 
-# Add ROC curves for each class
+# add ROC curves for each class
 for i, color in zip(range(n_classes), colors):
     roc_curve_graph.add_trace(
         go.Scatter(
@@ -950,7 +933,7 @@ for i, color in zip(range(n_classes), colors):
         )
     )
 
-# Add micro-average ROC curve
+# add micro-average ROC curve
 roc_curve_graph.add_trace(
     go.Scatter(
         x=fpr["micro"],
@@ -961,7 +944,7 @@ roc_curve_graph.add_trace(
     )
 )
 
-# Add diagonal random classifier line
+# add diagonal random classifier line
 roc_curve_graph.add_trace(
     go.Scatter(
         x=[0, 1],
@@ -972,7 +955,7 @@ roc_curve_graph.add_trace(
     )
 )
 
-# Update layout
+# update layout
 roc_curve_graph.update_layout(
     title="ROC Curves for Multiclass Logistic Regression Model",
     xaxis_title="False Positive Rate",
@@ -988,11 +971,11 @@ roc_curve_graph.update_layout(
     )
 )
 
-# Get feature coefficients for each class
+# get feature coefficients for each class
 coefficients = logistic_model.coef_
 feature_names = feature_columns
 
-# Create a DataFrame to visualize feature importance
+# create df to visualize feature importance
 coef_df = pd.DataFrame(
     coefficients.T,
     index=feature_names,
@@ -1005,7 +988,7 @@ coef_long = coef_long.melt(id_vars='index',
                            value_name='Coefficient')
 coef_long.rename(columns={'index': 'Feature'}, inplace=True)
 
-# Create grouped bar chart
+# create grouped bar chart
 feature_importance_graph = px.bar(
     coef_long,
     x='Feature',
@@ -1024,7 +1007,7 @@ feature_importance_graph.update_layout(
     xaxis=dict(tickangle=45)
 )
 
-# Calculate average absolute coefficient for overall feature importance
+# calculate average absolute coefficient for overall feature importance
 coef_df['avg_abs_coef'] = coef_df.abs().mean(axis=1)
 coef_df_sorted = coef_df.sort_values('avg_abs_coef', ascending=False)
 
@@ -1044,7 +1027,7 @@ feature_importance_ranked_graph.update_layout(
     xaxis=dict(tickangle=45)
 )
 
-# Create model coefficients table data
+# create model coefficients table data
 coef_table_df = pd.DataFrame(
     logistic_model.coef_,
     index=logistic_model.classes_,
@@ -1111,11 +1094,11 @@ def update_logistic_plots(tab_value, num_bins):
             html.P(f"Test Accuracy: {test_accuracy_binned:.4f} ({test_accuracy_binned*100:.2f}%)", style={'fontSize': '16px', 'margin': '5px 0'}),
         ])
         
-        # --- 1. GOLD CONFUSION MATRIX ---
+     
         cm_binned = confusion_matrix(y_test_binned, y_test_pred_binned, labels=model_binned.classes_)
         cm_df_binned = pd.DataFrame(cm_binned, index=model_binned.classes_, columns=model_binned.classes_)
         
-        # Custom Black to Gold Color Scale
+        
         gold_scale = [[0, '#000000'], [1, theme['accent']]]
         
         confusion_matrix_graph_binned = px.imshow(
@@ -1127,7 +1110,7 @@ def update_logistic_plots(tab_value, num_bins):
         )
         confusion_matrix_graph_binned.update_layout(plot_bgcolor=theme['card_bg'], paper_bgcolor=theme['background'], font_color=theme['text'])
         
-        # --- 2. GOLD ROC CURVES ---
+        
         y_test_proba_binned = model_binned.predict_proba(X_test_scaled_binned)
         y_test_binarized_binned = label_binarize(y_test_binned, classes=model_binned.classes_)
         n_classes_binned = len(model_binned.classes_)
@@ -1142,7 +1125,7 @@ def update_logistic_plots(tab_value, num_bins):
         
         roc_curve_graph_binned = go.Figure()
         
-        # Distinct Gold-ish colors for lines
+        
         colors_binned = [theme['accent'], '#FFFFFF', theme['accent_secondary'], '#FFEA00', '#fcf6ba']
         
         for i, color in zip(range(n_classes_binned), colors_binned[:n_classes_binned]):
@@ -1171,7 +1154,7 @@ def update_logistic_plots(tab_value, num_bins):
             legend=dict(bgcolor=theme['card_bg'], bordercolor=theme['accent'])
         )
         
-        # --- 3. GOLD BAR CHARTS ---
+        
         coefficients_binned = model_binned.coef_
         coef_df_binned = pd.DataFrame(coefficients_binned.T, index=feature_columns_binned, columns=model_binned.classes_)
         coef_long_binned = coef_df_binned.drop(columns=['avg_abs_coef'], errors='ignore').reset_index().melt(id_vars='index', var_name='Class', value_name='Coefficient')
@@ -1188,7 +1171,7 @@ def update_logistic_plots(tab_value, num_bins):
             xaxis=dict(tickangle=45)
         )
         
-        # Ranked Importance
+        
         coef_df_binned['avg_abs_coef'] = coef_df_binned.abs().mean(axis=1)
         coef_ranked_binned = coef_df_binned.sort_values('avg_abs_coef', ascending=False)[['avg_abs_coef']].reset_index()
         
@@ -1198,14 +1181,14 @@ def update_logistic_plots(tab_value, num_bins):
             labels={'index': 'Feature', 'avg_abs_coef': 'Importance'},
             template='plotly_dark'
         )
-        # Force bars to be solid Gold
+   
         feature_importance_ranked_graph_binned.update_traces(marker_color=theme['accent']) 
         feature_importance_ranked_graph_binned.update_layout(
             plot_bgcolor=theme['card_bg'], paper_bgcolor=theme['background'], font_color=theme['text'],
             xaxis=dict(tickangle=45)
         )
         
-        # Table
+        
         coef_table_df_binned = pd.DataFrame(model_binned.coef_, index=model_binned.classes_, columns=feature_columns_binned)
         intercept_df_binned = pd.DataFrame(model_binned.intercept_, index=model_binned.classes_, columns=["Intercept"])
         model_details_df_binned = pd.concat([coef_table_df_binned, intercept_df_binned], axis=1).reset_index().rename(columns={'index': 'Class'})
@@ -1241,23 +1224,23 @@ def show_person_bin(selected_name, num_bins):
     Input('model-selector', 'value')
 )
 def update_graph(selected_model):
-    # 1. Run PCA
+    # run pca from func above
     features = feature_sets[selected_model]
     pc_df, loadings_df, eigvals = calculate_pca(features)
     
     loadings_df = loadings_df.reset_index().rename(columns={'index': 'Feature'})
     
-    # 2. Base Plot
+    #  biplot
     fig = px.scatter(pc_df, x='PC1', y='PC2', 
                      hover_name='name',
                      hover_data=features + ['race', 'gender'], 
                      title=f"PCA Biplot: {selected_model}",
                      template='plotly_dark')
 
-    # --- UPDATE DOTS TO GOLD ---
+   
     fig.update_traces(marker=dict(color=theme['accent'], size=8))
 
-    # 3. Add Arrows
+    # add vecs
     scale_factor = max(pc_df['PC1'].max(), pc_df['PC2'].max()) 
     
     for i, row in loadings_df.iterrows():
@@ -1271,7 +1254,7 @@ def update_graph(selected_model):
             name=var_name,
             text=[None, var_name],
             textposition="top center",
-            line=dict(width=3, color='white') # Arrows in White to contrast against Gold dots
+            line=dict(width=3, color='white') 
         ))
         
         fig.add_annotation(
@@ -1279,7 +1262,7 @@ def update_graph(selected_model):
             showarrow=True, arrowhead=2, arrowsize=1, arrowwidth=2, arrowcolor='white'
         )
 
-    # 4. Polish Layout
+    # layout for theme
     fig.update_layout(
         xaxis_title="PC1",
         yaxis_title="PC2",
@@ -1342,22 +1325,21 @@ def update_cluster_plots(tab_value, k_value):
     [Input('regression-variable', 'value')]
 )
 def update_linear_tab(selected_feature):
-    # 1. Safety Check
+    
     if not selected_feature:
         return go.Figure(), go.Figure(), "Please select a feature."
 
-    # 2. Prepare Single-Feature Data (Reshaping is crucial here)
-    # We use the global Xlin_train/test variables defined earlier
+   
     x_train_feat = Xlin_train[[selected_feature]].values
     x_test_feat  = Xlin_test[[selected_feature]].values
     y_train_vec  = ylin_train.values
     y_test_vec   = ylin_test.values
 
-    # 3. Train Single-Feature Model
+    
     sf_lr = LinearRegression()
     sf_lr.fit(x_train_feat, y_train_vec)
     
-    # 4. Predictions & Metrics
+
     y_pred_test = sf_lr.predict(x_test_feat)
     residuals   = y_test_vec - y_pred_test
     
@@ -1365,19 +1347,19 @@ def update_linear_tab(selected_feature):
     r2_test  = r2_score(y_test_vec, y_pred_test)
     rmse_test = np.sqrt(mean_squared_error(y_test_vec, y_pred_test))
 
-    # 5. Create Line for Visualization (Min to Max of test data)
+
     x_range = np.linspace(x_test_feat.min(), x_test_feat.max(), 100).reshape(-1, 1)
     y_line  = sf_lr.predict(x_range)
 
-    # --- PLOT 1: Scatter + Line ---
+    
     scatter_fig = go.Figure()
-    # Actual Test Points (Gold)
+    
     scatter_fig.add_trace(go.Scatter(
         x=x_test_feat.ravel(), y=y_test_vec,
         mode='markers', name='Actual (Test)',
         marker=dict(color=theme['accent'], opacity=0.8, size=8)
     ))
-    # Fitted Line (White)
+   
     scatter_fig.add_trace(go.Scatter(
         x=x_range.ravel(), y=y_line,
         mode='lines', name='Fitted Line',
@@ -1393,14 +1375,14 @@ def update_linear_tab(selected_feature):
         font_color=theme['text']
     )
 
-    # --- PLOT 2: Residuals ---
+    # residual plot
     resid_fig = go.Figure()
     resid_fig.add_trace(go.Scatter(
         x=x_test_feat.ravel(), y=residuals,
         mode='markers', name='Residuals',
         marker=dict(color=theme['accent'], opacity=0.8, size=8)
     ))
-    # Zero line
+  
     resid_fig.add_hline(y=0, line=dict(color='red', dash='dash'))
     resid_fig.update_layout(
         title=f"Residuals for {selected_feature}",
@@ -1412,8 +1394,7 @@ def update_linear_tab(selected_feature):
         font_color=theme['text']
     )
 
-    # --- SUMMARY TEXT ---
-    # Using the GLOBAL RidgeCV results for the text summary
+   
     coef_lines = [
         html.P(f"{feat}: {coef_map[feat]:.4f}", style={'margin': 0, 'color': theme['text']})
         for feat in predictive_cols
